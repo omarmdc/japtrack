@@ -31,3 +31,16 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Mac system files
+.DS_Store
+**/.DS_Store
+
+# Maven
+*.class
+*.jar
+*.war
+*.ear
+
+# Logs
+*.log
