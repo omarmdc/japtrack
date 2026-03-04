@@ -1,17 +1,23 @@
 package com.japtrack.project.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "users") // avoiding conflicts with MySQL reserved word 'user'
 public class User {
+
+
+    // Attributes
 
     @Id
     @GeneratedValue(strategy =  GenerationType.IDENTITY)
     private Long userID;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String userName;
 
     @Column(nullable = false)
@@ -26,8 +32,19 @@ public class User {
     @Column(nullable = false)
     private String passwordHash;
 
+    @CreationTimestamp
+    @Column(updatable = false)       // safety measure (making sure createdAt can't be overwritten)
+    private LocalDateTime createdAt;
 
-    // getters and setters
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
+
+    // Constructor
+    public User() {
+    }
+
+    // Getters and Setters
 
     public Long getUserID() {
         return userID;
@@ -69,5 +86,19 @@ public class User {
     }
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+    public void setCreatedAt (LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }
