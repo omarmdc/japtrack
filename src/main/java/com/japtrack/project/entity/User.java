@@ -5,6 +5,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "users") // avoiding conflicts with MySQL reserved word 'user'
@@ -14,8 +15,11 @@ public class User {
     // Attributes
 
     @Id
-    @GeneratedValue(strategy =  GenerationType.IDENTITY)
+    @GeneratedValue(strategy =  GenerationType.IDENTITY) // When a new record is added, increment the number
     private Long userID;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL) // CascadeType.ALL (if user is deleted, the applications are too)
+    private List<Application> applications;
 
     @Column(nullable = false, unique = true)
     private String userName;
@@ -44,6 +48,7 @@ public class User {
     public User() {
     }
 
+
     // Getters and Setters
 
     public Long getUserID() {
@@ -51,6 +56,13 @@ public class User {
     }
     public void setUserID(Long userID) {
         this.userID = userID;
+    }
+
+    public List<Application> getApplications() {
+        return applications;
+    }
+    public void setApplications(List<Application> applications) {
+        this.applications = applications;
     }
 
     public String getUserName() {
