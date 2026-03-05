@@ -1,5 +1,9 @@
 package com.japtrack.project.entity;
 
+import com.japtrack.project.enums.ApplicationStatus;
+import com.japtrack.project.enums.EmploymentType;
+import com.japtrack.project.enums.WorkSetting;
+import com.japtrack.project.enums.WorkType;
 import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -31,16 +35,20 @@ public class Application {
 
     private Double payRate;
 
-    private String workSetting;
+    @Enumerated(EnumType.STRING)
+    private WorkSetting workSetting;
 
-    private String workType;
+    @Enumerated(EnumType.STRING)
+    private WorkType workType;
 
-    private String employmentType;
+    @Enumerated(EnumType.STRING)
+    private EmploymentType employmentType;
+
+    @Enumerated(EnumType.STRING)
+    private ApplicationStatus status;
 
     @Column(nullable = false)
     private LocalDate dateApplied;
-
-    private String status;
 
     private String notes;
 
@@ -98,24 +106,24 @@ public class Application {
         this.payRate = payRate;
     }
 
-    public String getWorkSetting() {
+    public WorkSetting getWorkSetting() {
         return workSetting;
     }
-    public void setWorkSetting(String workSetting) {
+    public void setWorkSetting(WorkSetting workSetting) {
         this.workSetting = workSetting;
     }
 
-    public String getWorkType() {
+    public WorkType getWorkType() {
         return workType;
     }
-    public void setWorkType(String workType) {
+    public void setWorkType(WorkType workType) {
         this.workType = workType;
     }
 
-    public String getEmploymentType() {
+    public EmploymentType getEmploymentType() {
         return employmentType;
     }
-    public void setEmploymentType(String employmentType) {
+    public void setEmploymentType(EmploymentType employmentType) {
         this.employmentType = employmentType;
     }
 
@@ -126,10 +134,10 @@ public class Application {
         this.dateApplied = dateApplied;
     }
 
-    public String getStatus() {
+    public ApplicationStatus getStatus() {
         return status;
     }
-    public void setStatus(String status) {
+    public void setStatus(ApplicationStatus status) {
         this.status = status;
     }
 
