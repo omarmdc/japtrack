@@ -16,13 +16,16 @@ public class User {
 
     @Id
     @GeneratedValue(strategy =  GenerationType.IDENTITY) // When a new record is added, increment the number
-    private Long userID;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL) // CascadeType.ALL (if user is deleted, the applications are too)
-    private List<Application> applications;
+    private Long userId;
 
     @Column(nullable = false, unique = true)
     private String userName;
+
+    @Column(nullable = false, unique = true)
+    private String userEmail;
+
+    @Column(nullable = false)
+    private String passwordHash;
 
     @Column(nullable = false)
     private String userFirstName;
@@ -30,11 +33,8 @@ public class User {
     @Column(nullable = false)
     private String userLastName;
 
-    @Column(nullable = false, unique = true)
-    private String userEmail;
-
-    @Column(nullable = false)
-    private String passwordHash;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL) // CascadeType.ALL (if user is deleted, the applications are too)
+    private List<Application> applications;
 
     @CreationTimestamp
     @Column(updatable = false)       // safety measure (making sure createdAt can't be overwritten)
@@ -52,10 +52,10 @@ public class User {
     // Getters and Setters
 
     public Long getUserID() {
-        return userID;
+        return userId;
     }
     public void setUserID(Long userID) {
-        this.userID = userID;
+        this.userId = userID;
     }
 
     public List<Application> getApplications() {
