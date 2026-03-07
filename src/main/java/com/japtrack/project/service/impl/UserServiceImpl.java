@@ -1,4 +1,4 @@
-package com.japtrack.project.service;
+package com.japtrack.project.service.impl;
 
 public class UserServiceImpl {
 }
