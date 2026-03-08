@@ -51,11 +51,11 @@ public class User {
 
     // Getters and Setters
 
-    public Long getUserID() {
+    public Long getUserId() {
         return userId;
     }
-    public void setUserID(Long userID) {
-        this.userId = userID;
+    public void setUserID(Long userId) {
+        this.userId = userId;
     }
 
     public List<Application> getApplications() {

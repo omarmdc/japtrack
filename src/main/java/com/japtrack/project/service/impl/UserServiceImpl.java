@@ -23,7 +23,7 @@ public class UserServiceImpl implements UserService {
             * findUserById
    */
 
-    // 1) converToResponse
+    // 1) convertToResponse
     private UserResponse convertToResponse(User user) {
         UserResponse response = new UserResponse();
         response.setUserId(user.getUserId());
