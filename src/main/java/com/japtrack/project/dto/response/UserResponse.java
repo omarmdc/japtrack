@@ -1,8 +1,11 @@
 package com.japtrack.project.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+@JsonPropertyOrder({"userId","userName","userEmail","userFirstName","userLastName","createdAt"})
 public class UserResponse {
 
     private Long userId;
