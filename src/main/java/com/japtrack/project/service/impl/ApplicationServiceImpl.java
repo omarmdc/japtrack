@@ -6,16 +6,23 @@ import com.japtrack.project.dto.response.UserResponse;
 import com.japtrack.project.entity.Application;
 import com.japtrack.project.entity.User;
 import com.japtrack.project.repository.ApplicationRepository;
+import com.japtrack.project.repository.UserRepository;
+import com.japtrack.project.service.ApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @Service
-public class ApplicationServiceImpl {
+public class ApplicationServiceImpl implements ApplicationService {
 
     @Autowired
     private ApplicationRepository applicationRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
 
     /*
@@ -52,4 +59,66 @@ public class ApplicationServiceImpl {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                 "Sorry, we couldn't find the job application you are looking for :( "));
     }
+
+     /*
+    - SIGNATURE METHODS:
+         * createUser
+         * updateUser
+         * deleteUser
+         * getUserById
+*/
+
+    // 1) Create a job application
+    public ApplicationResponse createApplication(ApplicationRequest request) {
+
+        Application application = new Application();
+
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        application.setUser(user);
+        application.setCompanyName(request.getCompanyName());
+        application.setPositionTitle(request.getPositionTitle());
+        application.setJobPostUrl(request.getJobPostUrl());
+        application.setPayRate(request.getPayRate());
+        application.setWorkSetting(request.getWorkSetting());
+        application.setWorkType(request.getWorkType());
+        application.setEmploymentType(request.getEmploymentType());
+        application.setStatus(request.getStatus());
+        application.setDateApplied(request.getDateApplied());
+        application.setNotes(request.getNotes());
+
+        Application savedApplication = applicationRepository.save(application);
+
+        return convertToResponse(savedApplication);
+    }
+
+
+    // 2) Update a job application
+    @Override
+    public ApplicationResponse updateApplication(Long applicationId, ApplicationRequest request) {
+        return null;
+    }
+
+
+    // 3) Delete a job application
+    @Override
+    public String deleteApplication(Long applicationId) {
+        return null;
+    }
+
+
+    // 4) Get a job application by its ID
+    @Override
+    public ApplicationResponse getApplicationById(Long applicationId) {
+        return null;
+    }
+
+
+    // 5) Get all job applications from a user (based on user's ID)
+    @Override
+    public List<ApplicationResponse> getApplicationsByUserId(Long userId) {
+        return null;
+    }
+
 }
