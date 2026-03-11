@@ -10,6 +10,7 @@ import java.time.LocalDate;
 public class ApplicationRequest {
 
     private String companyName;
+    private Long userId;
     private String positionTitle;
     private String jobPostUrl;
     private Double payRate;
@@ -90,5 +91,12 @@ public class ApplicationRequest {
     }
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 }

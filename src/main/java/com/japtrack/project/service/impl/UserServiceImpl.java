@@ -67,6 +67,7 @@ public class UserServiceImpl implements UserService {
         user.setUserLastName(request.getUserLastName());
 
         User savedUser = userRepository.save(user);
+
         return convertToResponse(savedUser);
     }
 
