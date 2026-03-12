@@ -97,7 +97,46 @@ public class ApplicationServiceImpl implements ApplicationService {
     // 2) Update a job application
     @Override
     public ApplicationResponse updateApplication(Long applicationId, ApplicationRequest request) {
-        return null;
+
+        Application application = findApplicationById(applicationId);
+
+
+        // Check which field exactly does the user want to update,
+        // this prevents the user from inputting all other fields again.
+
+        if (request.getCompanyName() != null) {
+            application.setCompanyName(request.getCompanyName());
+        }
+        if (request.getPositionTitle() != null) {
+            application.setPositionTitle(request.getPositionTitle());
+        }
+        if (request.getJobPostUrl() != null) {
+            application.setJobPostUrl(request.getJobPostUrl());
+        }
+        if (request.getPayRate() != null) {
+            application.setPayRate(request.getPayRate());
+        }
+        if (request.getWorkSetting() != null) {
+            application.setWorkSetting(request.getWorkSetting());
+        }
+        if (request.getWorkType() != null) {
+            application.setWorkType(request.getWorkType());
+        }
+        if (request.getEmploymentType() != null) {
+            application.setEmploymentType(request.getEmploymentType());
+        }
+        if (request.getStatus() != null) {
+            application.setStatus(request.getStatus());
+        }
+        if (request.getDateApplied() != null) {
+            application.setDateApplied(request.getDateApplied());
+        }
+        if (request.getNotes() != null) {
+            application.setNotes(request.getNotes());
+        }
+
+        Application updatedApplication = applicationRepository.save(application);
+        return convertToResponse(updatedApplication);
     }
 
 
