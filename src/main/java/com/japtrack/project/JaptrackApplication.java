@@ -9,6 +9,6 @@ public class JaptrackApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(JaptrackApplication.class, args);
 
-        System.out.println("Testing Japtrack");
+        System.out.println("Testing JapTrack");
 	}
 }
