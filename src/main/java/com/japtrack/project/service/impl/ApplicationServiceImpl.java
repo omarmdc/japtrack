@@ -155,7 +155,10 @@ public class ApplicationServiceImpl implements ApplicationService {
     // 4) Get a job application by its ID
     @Override
     public ApplicationResponse getApplicationById(Long applicationId) {
-        return null;
+
+        Application application = findApplicationById(applicationId);
+
+        return convertToResponse(application);
     }
 
 

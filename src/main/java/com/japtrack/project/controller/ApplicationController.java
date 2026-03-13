@@ -37,6 +37,14 @@ public class ApplicationController {
     }
 
 
+    // 4) Get a job application by its ID
+    @GetMapping("/{applicationId}")
+    public ApplicationResponse getApplicationById(@PathVariable Long applicationId) {
+        return applicationService.getApplicationById(applicationId);
+    }
+
+
+
 
 
 
