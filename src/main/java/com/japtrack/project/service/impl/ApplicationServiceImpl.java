@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ApplicationServiceImpl implements ApplicationService {
@@ -143,7 +144,11 @@ public class ApplicationServiceImpl implements ApplicationService {
     // 3) Delete a job application
     @Override
     public String deleteApplication(Long applicationId) {
-        return null;
+
+        Application application = findApplicationById(applicationId);
+        applicationRepository.delete(application);
+
+        return "Application deleted successfully!";
     }
 
 

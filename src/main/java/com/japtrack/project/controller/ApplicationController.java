@@ -30,6 +30,14 @@ public class ApplicationController {
     }
 
 
+    // 3) Delete a job application
+    @DeleteMapping("/{applicationId}")
+    public String deleteApplication(@PathVariable Long applicationId) {
+        return applicationService.deleteApplication(applicationId);
+    }
+
+
+
 
 
 
