@@ -13,8 +13,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ApplicationServiceImpl implements ApplicationService {
@@ -55,10 +57,10 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     // 2) Find job application by its ID
-    private Application findApplicationById(Long applicationId)  {
+    private Application findApplicationById(Long applicationId) {
         return applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                "Sorry, we couldn't find the job application you are looking for :( "));
+                        "Sorry, we couldn't find the job application you are looking for :( "));
     }
 
      /*
@@ -165,7 +167,11 @@ public class ApplicationServiceImpl implements ApplicationService {
     // 5) Get all job applications from a user (based on user's ID)
     @Override
     public List<ApplicationResponse> getApplicationsByUserId(Long userId) {
-        return null;
-    }
 
+        List<Application> userApplications = applicationRepository.findByUser_UserId(userId);
+
+        return userApplications.stream()
+                .map(application -> convertToResponse(application))
+                .collect(Collectors.toList());
+    }
 }

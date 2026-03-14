@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/applications")
 public class ApplicationController {
@@ -44,11 +46,9 @@ public class ApplicationController {
     }
 
 
-
-
-
-
-
-
-
+    // 5) Get all job applications from a user (based on user's ID)
+    @GetMapping("/user/{userId}")
+    public List<ApplicationResponse> getApplicationsByUserId(@PathVariable Long userId) {
+        return applicationService.getApplicationsByUserId(userId);
+    }
 }
