@@ -1,5 +1,6 @@
 package com.japtrack.project.exception.handler;
 
+import com.japtrack.project.exception.custom.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -11,7 +12,23 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Global Handler
+
+    // CUSTOMS
+
+    // 1) Resource Not Found - 404
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> resourceNotFound (ResourceNotFoundException e) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("status", 404);
+        error.put("message", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    // 2) Duplicate Resource - 409
+
+
+
+    // GLOBAL HANDLER
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
         Map<String, Object> error = new HashMap<>();
@@ -19,12 +36,4 @@ public class GlobalExceptionHandler {
         error.put("message", "Sorry, something went wrong :(");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
-
-
-    // CUSTOMS
-
-    // 1) Resource Not Found - 404
-
-    // 2) Duplicate Resource - 409
-
 }

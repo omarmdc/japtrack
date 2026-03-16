@@ -3,6 +3,7 @@ package com.japtrack.project.service.impl;
 import com.japtrack.project.dto.request.UserRequest;
 import com.japtrack.project.dto.response.UserResponse;
 import com.japtrack.project.entity.User;
+import com.japtrack.project.exception.custom.ResourceNotFoundException;
 import com.japtrack.project.repository.UserRepository;
 import com.japtrack.project.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,8 +42,8 @@ public class UserServiceImpl implements UserService {
     // 2) findUserById
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "We couldn't find the user you are looking for :("));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Sorry, we couldn't find user with ID: " +userId));
     }
 
 

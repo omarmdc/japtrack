@@ -5,6 +5,7 @@ import com.japtrack.project.dto.response.ApplicationResponse;
 import com.japtrack.project.dto.response.UserResponse;
 import com.japtrack.project.entity.Application;
 import com.japtrack.project.entity.User;
+import com.japtrack.project.exception.custom.ResourceNotFoundException;
 import com.japtrack.project.repository.ApplicationRepository;
 import com.japtrack.project.repository.UserRepository;
 import com.japtrack.project.service.ApplicationService;
@@ -59,8 +60,8 @@ public class ApplicationServiceImpl implements ApplicationService {
     // 2) Find job application by its ID
     private Application findApplicationById(Long applicationId) {
         return applicationRepository.findById(applicationId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Sorry, we couldn't find the job application you are looking for :( "));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Sorry, we couldn't find a job application with ID: " +applicationId));
     }
 
      /*
@@ -77,7 +78,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         Application application = new Application();
 
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                "Sorry, we couldn't find user with ID: " + request.getUserId()));
 
         application.setUser(user);
         application.setCompanyName(request.getCompanyName());
