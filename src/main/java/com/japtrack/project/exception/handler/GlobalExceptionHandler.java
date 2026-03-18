@@ -1,6 +1,8 @@
 package com.japtrack.project.exception.handler;
 
+import com.japtrack.project.exception.custom.DuplicateResourceException;
 import com.japtrack.project.exception.custom.ResourceNotFoundException;
+import org.hibernate.type.descriptor.java.ObjectJavaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -25,6 +27,13 @@ public class GlobalExceptionHandler {
     }
 
     // 2) Duplicate Resource - 409
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<Map<String, Object>> duplicatedResource (DuplicateResourceException e) {
+        Map<String, Object> error = new HashMap<>();
+        error.put("status", 409);
+        error.put("message", e.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
 
 
 

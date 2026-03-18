@@ -3,6 +3,7 @@ package com.japtrack.project.service.impl;
 import com.japtrack.project.dto.request.UserRequest;
 import com.japtrack.project.dto.response.UserResponse;
 import com.japtrack.project.entity.User;
+import com.japtrack.project.exception.custom.DuplicateResourceException;
 import com.japtrack.project.exception.custom.ResourceNotFoundException;
 import com.japtrack.project.repository.UserRepository;
 import com.japtrack.project.service.UserService;
@@ -59,6 +60,18 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponse createUser (UserRequest request) {
 
+        // Check if email is already in use
+        if (userRepository.existsByUserEmail(request.getUserEmail())) {
+            throw new DuplicateResourceException(
+                    "Email already in use, please try another one.");
+        }
+
+        // Check if username is already in use
+        if (userRepository.existsByUserName(request.getUserName())) {
+            throw new DuplicateResourceException(
+                    "@username already in use, please try another one.");
+        }
+
         User user = new User();
 
         user.setUserEmail(request.getUserEmail());
@@ -84,17 +97,33 @@ public class UserServiceImpl implements UserService {
         // this prevents the user from inputting all other fields again.
 
         if (request.getUserName() != null) {
+
+            if (userRepository.existsByUserName(request.getUserName())) {
+                throw new DuplicateResourceException(
+                        "@username already in use, please try another one.");
+            }
+
             user.setUserName(request.getUserName());
         }
+
         if (request.getUserFirstName() != null) {
             user.setUserFirstName(request.getUserFirstName());
         }
+
         if (request.getUserLastName() != null) {
             user.setUserLastName(request.getUserLastName());
         }
+
         if (request.getUserEmail() != null) {
+
+            if (userRepository.existsByUserEmail(request.getUserEmail())) {
+                throw new DuplicateResourceException(
+                        "Email already in use, please try another one.");
+            }
+
             user.setUserEmail(request.getUserEmail());
         }
+
         if (request.getPassword() != null) {
             user.setPasswordHash(request.getPassword());
         }
