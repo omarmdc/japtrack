@@ -1,6 +1,9 @@
 package com.japtrack.project.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -9,6 +12,9 @@ import java.util.List;
 
 @Entity
 @Table(name = "users") // avoiding conflicts with MySQL reserved word 'user'
+@Getter
+@Setter
+@NoArgsConstructor
 public class User {
 
 
@@ -42,75 +48,5 @@ public class User {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
-
-    // Constructor
-    public User() {
-    }
-
-
-    // Getters and Setters
-
-    public Long getUserId() {
-        return userId;
-    }
-    public void setUserID(Long userId) {
-        this.userId = userId;
-    }
-
-    public List<Application> getApplications() {
-        return applications;
-    }
-    public void setApplications(List<Application> applications) {
-        this.applications = applications;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public String getUserFirstName() {
-        return userFirstName;
-    }
-    public void setUserFirstName(String userFirstName) {
-        this.userFirstName = userFirstName;
-    }
-
-    public String getUserLastName() {
-        return userLastName;
-    }
-    public void setUserLastName(String userLastName) {
-        this.userLastName = userLastName;
-    }
-
-    public String getUserEmail() {
-        return userEmail;
-    }
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-    public void setCreatedAt (LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
 }
+
