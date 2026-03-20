@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
+
+@JsonPropertyOrder({"applicationId", "userId", "jobPostUrl", "companyName", "positionTitle", "payRate", "workSetting", "workType", "employmentType", "status", "dateApplied", "notes", "createdAt"})
 @Data
 @NoArgsConstructor
 public class ApplicationResponse {
