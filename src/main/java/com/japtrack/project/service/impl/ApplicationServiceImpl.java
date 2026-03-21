@@ -2,7 +2,6 @@ package com.japtrack.project.service.impl;
 
 import com.japtrack.project.dto.request.ApplicationRequest;
 import com.japtrack.project.dto.response.ApplicationResponse;
-import com.japtrack.project.dto.response.UserResponse;
 import com.japtrack.project.entity.Application;
 import com.japtrack.project.entity.User;
 import com.japtrack.project.exception.custom.ResourceNotFoundException;
@@ -10,14 +9,11 @@ import com.japtrack.project.repository.ApplicationRepository;
 import com.japtrack.project.repository.UserRepository;
 import com.japtrack.project.service.ApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
+
 
 @Service
 public class ApplicationServiceImpl implements ApplicationService {
