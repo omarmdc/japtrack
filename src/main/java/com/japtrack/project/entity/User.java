@@ -1,6 +1,7 @@
 package com.japtrack.project.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -29,6 +30,7 @@ public class User implements UserDetails {
     @GeneratedValue(strategy =  GenerationType.IDENTITY) // When a new record is added, increment the number
     private Long userId;
 
+    @Getter(AccessLevel.NONE) // We have 2 methods with almost the same name, this way we avoid errors
     @Column(nullable = false, unique = true)
     private String userName;
 
@@ -53,6 +55,11 @@ public class User implements UserDetails {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    // We have 2 methods with almost the same name, this way we avoid errors
+    public String getUserName() {
+        return userName;
+    }
 
 
     // Security (UserDetails methods~)
