@@ -1,19 +1,13 @@
 package com.japtrack.project.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.jspecify.annotations.Nullable;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
 import java.util.List;
 
 @Entity
@@ -21,7 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class User implements UserDetails {
+public class User {
 
 
     // Attributes
@@ -30,7 +24,6 @@ public class User implements UserDetails {
     @GeneratedValue(strategy =  GenerationType.IDENTITY) // When a new record is added, increment the number
     private Long userId;
 
-    @Getter(AccessLevel.NONE) // We have 2 methods with almost the same name, this way we avoid errors
     @Column(nullable = false, unique = true)
     private String userName;
 
@@ -55,48 +48,5 @@ public class User implements UserDetails {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
-
-    // We have 2 methods with almost the same name, this way we avoid errors
-    public String getUserName() {
-        return userName;
-    }
-
-
-    // Security (UserDetails methods~)
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("USER"));
-    }
-
-    @Override
-    public String getPassword() {
-        return passwordHash;
-    }
-
-    @Override
-    public String getUsername() {
-        return userEmail;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
 }
 

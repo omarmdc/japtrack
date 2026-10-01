@@ -7,15 +7,20 @@ import com.japtrack.project.exception.custom.DuplicateResourceException;
 import com.japtrack.project.exception.custom.ResourceNotFoundException;
 import com.japtrack.project.repository.UserRepository;
 import com.japtrack.project.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 
 @Service
 public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
 
     /*
@@ -74,7 +79,7 @@ public class UserServiceImpl implements UserService {
         User user = new User();
 
         user.setUserEmail(request.getUserEmail());
-        user.setPasswordHash(request.getPassword());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setUserName(request.getUserName());
         user.setUserFirstName(request.getUserFirstName());
         user.setUserLastName(request.getUserLastName());
@@ -123,8 +128,9 @@ public class UserServiceImpl implements UserService {
             user.setUserEmail(request.getUserEmail());
         }
 
+        // Temporary: password changes move to a dedicated endpoint in a later phase
         if (request.getPassword() != null) {
-            user.setPasswordHash(request.getPassword());
+            user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         }
 
         User updatedUser = userRepository.save(user);
