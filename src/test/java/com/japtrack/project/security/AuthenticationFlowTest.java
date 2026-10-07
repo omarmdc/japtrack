@@ -2,6 +2,7 @@ package com.japtrack.project.security;
 
 import com.japtrack.project.entity.User;
 import com.japtrack.project.repository.UserRepository;
+import com.japtrack.project.support.SpaCsrf;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,9 +18,13 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.Arrays;
+
+import static com.japtrack.project.support.SpaCsrf.mismatchedToken;
+import static com.japtrack.project.support.SpaCsrf.validToken;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -63,7 +68,7 @@ class AuthenticationFlowTest {
                         .session(session)
                         .param("username", username)
                         .param("password", password)
-                        .with(csrf()))
+                        .with(validToken(mockMvc)))
                 .andReturn();
     }
 
@@ -161,6 +166,78 @@ class AuthenticationFlowTest {
     // CSRF
 
     @Test
+    void csrfTokenIsIssuedAsReadableCookieWithoutCreatingSession() throws Exception {
+        MvcResult result = mockMvc.perform(get("/api/auth/csrf")).andReturn();
+
+        Cookie csrfCookie = result.getResponse().getCookie(SpaCsrf.COOKIE_NAME);
+        assertThat(csrfCookie).isNotNull();
+        assertThat(csrfCookie.getValue()).isNotBlank();
+        // The frontend must be able to read it, to copy it into the X-XSRF-TOKEN header
+        assertThat(csrfCookie.isHttpOnly()).isFalse();
+        // Cookie-based CSRF must not need a server session
+        assertThat(result.getRequest().getSession(false)).isNull();
+    }
+
+    @Test
+    void loginIssuesANewCsrfToken() throws Exception {
+        Cookie tokenBeforeLogin = SpaCsrf.fetchToken(mockMvc);
+
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .session(new MockHttpSession())
+                        .param("username", "jdoe@example.com")
+                        .param("password", PASSWORD)
+                        .cookie(tokenBeforeLogin)
+                        .header(SpaCsrf.HEADER_NAME, tokenBeforeLogin.getValue()))
+                .andExpect(status().isNoContent())
+                .andReturn();
+
+        // The response first clears the old cookie, then sets the new token
+        String newToken = Arrays.stream(result.getResponse().getCookies())
+                .filter(cookie -> SpaCsrf.COOKIE_NAME.equals(cookie.getName()))
+                .map(Cookie::getValue)
+                .filter(value -> !value.isEmpty())
+                .reduce((first, second) -> second)
+                .orElse(null);
+        assertThat(newToken).isNotNull().isNotEqualTo(tokenBeforeLogin.getValue());
+    }
+
+    @Test
+    void authenticatedPatchWithValidCsrfTokenSucceeds() throws Exception {
+        MockHttpSession session = loggedInSession();
+
+        mockMvc.perform(patch("/api/users/{userId}", user.getUserId())
+                        .session(session)
+                        .with(validToken(mockMvc))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"userFirstName\": \"Janet\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userFirstName").value("Janet"));
+    }
+
+    @Test
+    void loginWithMismatchedCsrfTokenReturnsJson403() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .param("username", "jdoe@example.com")
+                        .param("password", PASSWORD)
+                        .with(mismatchedToken(mockMvc)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Invalid or missing CSRF token"));
+    }
+
+    @Test
+    void authenticatedPostWithMismatchedCsrfTokenReturnsJson403() throws Exception {
+        MockHttpSession session = loggedInSession();
+
+        mockMvc.perform(post("/api/applications")
+                        .session(session)
+                        .with(mismatchedToken(mockMvc))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Invalid or missing CSRF token"));
+    }
+
+    @Test
     void loginWithoutCsrfTokenReturnsJson403() throws Exception {
         mockMvc.perform(post("/api/auth/login")
                         .param("username", "jdoe@example.com")
@@ -190,7 +267,7 @@ class AuthenticationFlowTest {
     void logoutReturns204InvalidatesSessionAndDeletesCookie() throws Exception {
         MockHttpSession session = loggedInSession();
 
-        MvcResult result = mockMvc.perform(post("/api/auth/logout").session(session).with(csrf()))
+        MvcResult result = mockMvc.perform(post("/api/auth/logout").session(session).with(validToken(mockMvc)))
                 .andExpect(status().isNoContent())
                 .andReturn();
 
