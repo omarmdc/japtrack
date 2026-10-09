@@ -69,6 +69,15 @@ class MyUserDetailsServiceTest {
     }
 
     @Test
+    void emailLookupIgnoresCaseAndSurroundingSpaces() {
+        when(userRepository.findByUserEmail("jdoe@example.com")).thenReturn(Optional.of(user));
+
+        UserDetails details = userDetailsService.loadUserByUsername("  JDoe@Example.COM ");
+
+        assertThat(((AuthenticatedUser) details).getUserId()).isEqualTo(7L);
+    }
+
+    @Test
     void unknownEmailThrowsGenericUsernameNotFound() {
         when(userRepository.findByUserEmail("nobody@example.com")).thenReturn(Optional.empty());
 

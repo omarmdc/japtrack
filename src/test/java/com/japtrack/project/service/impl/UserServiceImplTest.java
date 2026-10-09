@@ -1,5 +1,6 @@
 package com.japtrack.project.service.impl;
 
+import com.japtrack.project.dto.request.RegisterRequest;
 import com.japtrack.project.dto.request.UserRequest;
 import com.japtrack.project.dto.response.UserResponse;
 import com.japtrack.project.entity.User;
@@ -40,8 +41,8 @@ class UserServiceImplTest {
         userService = new UserServiceImpl(userRepository, passwordEncoder);
     }
 
-    private UserRequest newUserRequest() {
-        UserRequest request = new UserRequest();
+    private RegisterRequest newUserRequest() {
+        RegisterRequest request = new RegisterRequest();
         request.setUserName("jdoe");
         request.setUserEmail("jdoe@example.com");
         request.setUserFirstName("Jane");
@@ -86,6 +87,38 @@ class UserServiceImplTest {
     @Test
     void createUserRejectsDuplicateEmail() {
         when(userRepository.existsByUserEmail("jdoe@example.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> userService.createUser(newUserRequest()))
+                .isInstanceOf(DuplicateResourceException.class);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void createUserTrimsAndLowercasesEmail() {
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> withDatabaseFields(invocation.getArgument(0)));
+        RegisterRequest request = newUserRequest();
+        request.setUserEmail("  Jane.Doe@Example.COM ");
+
+        UserResponse response = userService.createUser(request);
+
+        verify(userRepository).existsByUserEmail("jane.doe@example.com");
+        assertThat(response.getUserEmail()).isEqualTo("jane.doe@example.com");
+    }
+
+    @Test
+    void createUserDuplicateEmailCheckIgnoresCase() {
+        when(userRepository.existsByUserEmail("jdoe@example.com")).thenReturn(true);
+        RegisterRequest request = newUserRequest();
+        request.setUserEmail("JDoe@Example.com");
+
+        assertThatThrownBy(() -> userService.createUser(request))
+                .isInstanceOf(DuplicateResourceException.class);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void createUserRejectsDuplicateUsername() {
+        when(userRepository.existsByUserName("jdoe")).thenReturn(true);
 
         assertThatThrownBy(() -> userService.createUser(newUserRequest()))
                 .isInstanceOf(DuplicateResourceException.class);

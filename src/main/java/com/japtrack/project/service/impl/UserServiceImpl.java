@@ -1,5 +1,6 @@
 package com.japtrack.project.service.impl;
 
+import com.japtrack.project.dto.request.RegisterRequest;
 import com.japtrack.project.dto.request.UserRequest;
 import com.japtrack.project.dto.response.UserResponse;
 import com.japtrack.project.entity.User;
@@ -60,12 +61,14 @@ public class UserServiceImpl implements UserService {
          * getUserById
 */
 
-    // 1) createUser
+    // 1) createUser (registration)
     @Override
-    public UserResponse createUser (UserRequest request) {
+    public UserResponse createUser (RegisterRequest request) {
+
+        String email = User.normalizeEmail(request.getUserEmail());
 
         // Check if email is already in use
-        if (userRepository.existsByUserEmail(request.getUserEmail())) {
+        if (userRepository.existsByUserEmail(email)) {
             throw new DuplicateResourceException(
                     "Email already in use, please try another one.");
         }
@@ -78,7 +81,7 @@ public class UserServiceImpl implements UserService {
 
         User user = new User();
 
-        user.setUserEmail(request.getUserEmail());
+        user.setUserEmail(email);
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setUserName(request.getUserName());
         user.setUserFirstName(request.getUserFirstName());
@@ -120,12 +123,14 @@ public class UserServiceImpl implements UserService {
 
         if (request.getUserEmail() != null) {
 
-            if (userRepository.existsByUserEmail(request.getUserEmail())) {
+            String email = User.normalizeEmail(request.getUserEmail());
+
+            if (userRepository.existsByUserEmail(email)) {
                 throw new DuplicateResourceException(
                         "Email already in use, please try another one.");
             }
 
-            user.setUserEmail(request.getUserEmail());
+            user.setUserEmail(email);
         }
 
         // Temporary: password changes move to a dedicated endpoint in a later phase

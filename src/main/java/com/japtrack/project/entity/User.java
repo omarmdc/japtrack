@@ -9,6 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 
 @Entity
 @Table(name = "users") // avoiding conflicts with MySQL reserved word 'user'
@@ -48,5 +49,11 @@ public class User {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+
+    // Emails are stored trimmed and lowercase, so lookups and duplicate checks are case-insensitive
+    public static String normalizeEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase(Locale.ROOT);
+    }
 }
 

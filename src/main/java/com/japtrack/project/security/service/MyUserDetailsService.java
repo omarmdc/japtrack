@@ -25,7 +25,7 @@ public class MyUserDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String userOrEmail) throws UsernameNotFoundException {
 
         Optional<User> user = userOrEmail.contains("@")
-                ? userRepository.findByUserEmail(userOrEmail)
+                ? userRepository.findByUserEmail(User.normalizeEmail(userOrEmail))
                 : userRepository.findByUserName(userOrEmail);
 
         // Generic message on purpose: it must not reveal which accounts exist
