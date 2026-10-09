@@ -1,6 +1,7 @@
 package com.japtrack.project.service.impl;
 
-import com.japtrack.project.dto.request.ApplicationRequest;
+import com.japtrack.project.dto.request.CreateApplicationRequest;
+import com.japtrack.project.dto.request.UpdateApplicationRequest;
 import com.japtrack.project.dto.response.ApplicationResponse;
 import com.japtrack.project.entity.Application;
 import com.japtrack.project.entity.User;
@@ -8,27 +9,28 @@ import com.japtrack.project.exception.custom.ResourceNotFoundException;
 import com.japtrack.project.repository.ApplicationRepository;
 import com.japtrack.project.repository.UserRepository;
 import com.japtrack.project.service.ApplicationService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 @Service
 public class ApplicationServiceImpl implements ApplicationService {
 
-    @Autowired
-    private ApplicationRepository applicationRepository;
+    private final ApplicationRepository applicationRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    public ApplicationServiceImpl(ApplicationRepository applicationRepository, UserRepository userRepository) {
+        this.applicationRepository = applicationRepository;
+        this.userRepository = userRepository;
+    }
 
 
     /*
        - HELPER METHODS:
             * convertToResponse
-            * findApplicationById
+            * findOwnedApplication
    */
 
     // 1) convertToResponse
@@ -53,31 +55,53 @@ public class ApplicationServiceImpl implements ApplicationService {
         return response;
     }
 
-    // 2) Find job application by its ID
-    private Application findApplicationById(Long applicationId) {
-        return applicationRepository.findById(applicationId)
+    // 2) The single ownership check used by get, update and delete.
+    // The query matches on BOTH the application ID and the owner, so another user's application
+    // is simply "not found". We return 404 rather than 403 on purpose: a 403 would confirm that
+    // the ID exists and belongs to someone else, which lets a client probe for other users' data.
+    private Application findOwnedApplication(Long currentUserId, Long applicationId) {
+        return applicationRepository.findByApplicationIdAndUser_UserId(applicationId, currentUserId)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Sorry, we couldn't find a job application with ID: " +applicationId));
+                        "Sorry, we couldn't find a job application with ID: " + applicationId));
     }
 
-     /*
-    - SIGNATURE METHODS:
-         * createUser
-         * updateUser
-         * deleteUser
-         * getUserById
-*/
 
-    // 1) Create a job application
-    public ApplicationResponse createApplication(ApplicationRequest request) {
+    /*
+    - SIGNATURE METHODS:
+         * getApplications
+         * createApplication
+         * getApplication
+         * updateApplication
+         * deleteApplication
+    */
+
+    // 1) Get all of the current user's job applications (newest first)
+    @Override
+    @Transactional(readOnly = true)
+    public List<ApplicationResponse> getApplications(Long currentUserId) {
+
+        return applicationRepository.findByUser_UserIdOrderByDateAppliedDescApplicationIdDesc(currentUserId)
+                .stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
+
+    // 2) Create a job application owned by the current user
+    @Override
+    @Transactional
+    public ApplicationResponse createApplication(Long currentUserId, CreateApplicationRequest request) {
+
+        // The owner comes only from the session. The request has no userId field, so a client
+        // cannot create an application for someone else.
+        // (The account could only be missing if it was deleted while this session was still active.)
+        User owner = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Sorry, we couldn't find user with ID: " + currentUserId));
 
         Application application = new Application();
 
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                "Sorry, we couldn't find user with ID: " + request.getUserId()));
-
-        application.setUser(user);
+        application.setUser(owner);
         application.setCompanyName(request.getCompanyName());
         application.setPositionTitle(request.getPositionTitle());
         application.setJobPostUrl(request.getJobPostUrl());
@@ -95,15 +119,27 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
 
-    // 2) Update a job application
+    // 3) Get one of the current user's job applications
     @Override
-    public ApplicationResponse updateApplication(Long applicationId, ApplicationRequest request) {
+    @Transactional(readOnly = true)
+    public ApplicationResponse getApplication(Long currentUserId, Long applicationId) {
 
-        Application application = findApplicationById(applicationId);
+        return convertToResponse(findOwnedApplication(currentUserId, applicationId));
+    }
+
+
+    // 4) Update one of the current user's job applications
+    @Override
+    @Transactional
+    public ApplicationResponse updateApplication(Long currentUserId, Long applicationId, UpdateApplicationRequest request) {
+
+        // Ownership is checked before anything is changed
+        Application application = findOwnedApplication(currentUserId, applicationId);
 
 
         // Check which field exactly does the user want to update,
         // this prevents the user from inputting all other fields again.
+        // The owner is never updated: UpdateApplicationRequest has no userId field.
 
         if (request.getCompanyName() != null) {
             application.setCompanyName(request.getCompanyName());
@@ -141,35 +177,13 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
 
-    // 3) Delete a job application
+    // 5) Delete one of the current user's job applications
     @Override
-    public String deleteApplication(Long applicationId) {
+    @Transactional
+    public void deleteApplication(Long currentUserId, Long applicationId) {
 
-        Application application = findApplicationById(applicationId);
+        // Same ownership check as get/update: someone else's application is a 404 and is never deleted
+        Application application = findOwnedApplication(currentUserId, applicationId);
         applicationRepository.delete(application);
-
-        return "Application deleted successfully!";
-    }
-
-
-    // 4) Get a job application by its ID
-    @Override
-    public ApplicationResponse getApplicationById(Long applicationId) {
-
-        Application application = findApplicationById(applicationId);
-
-        return convertToResponse(application);
-    }
-
-
-    // 5) Get all job applications from a user (based on user's ID)
-    @Override
-    public List<ApplicationResponse> getApplicationsByUserId(Long userId) {
-
-        List<Application> userApplications = applicationRepository.findByUser_UserId(userId);
-
-        return userApplications.stream()
-                .map(application -> convertToResponse(application))
-                .collect(Collectors.toList());
     }
 }

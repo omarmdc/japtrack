@@ -1,54 +1,71 @@
 package com.japtrack.project.controller;
 
-import com.japtrack.project.dto.request.ApplicationRequest;
+import com.japtrack.project.dto.request.CreateApplicationRequest;
+import com.japtrack.project.dto.request.UpdateApplicationRequest;
 import com.japtrack.project.dto.response.ApplicationResponse;
+import com.japtrack.project.security.AuthenticatedUser;
 import com.japtrack.project.service.ApplicationService;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// Every endpoint works on the logged-in user's applications only.
+// @AuthenticationPrincipal gives us the AuthenticatedUser that Spring Security restored from the session,
+// so the user ID can't be tampered with by the client. No endpoint accepts a userId.
+// All routes require login (SecurityConfig), so currentUser is always present here.
 @RestController
 @RequestMapping("/api/applications")
 public class ApplicationController {
 
-    @Autowired
-    private ApplicationService applicationService;
+    private final ApplicationService applicationService;
 
-    // 1) Create a job application
+    public ApplicationController(ApplicationService applicationService) {
+        this.applicationService = applicationService;
+    }
+
+
+    // 1) List the current user's job applications
+    @GetMapping
+    public List<ApplicationResponse> getApplications(@AuthenticationPrincipal AuthenticatedUser currentUser) {
+        return applicationService.getApplications(currentUser.getUserId());
+    }
+
+
+    // 2) Create a job application for the current user
     @PostMapping
-    public ResponseEntity<ApplicationResponse> createApplication(@RequestBody ApplicationRequest request) {
-        ApplicationResponse response = applicationService.createApplication(request);
+    public ResponseEntity<ApplicationResponse> createApplication(@AuthenticationPrincipal AuthenticatedUser currentUser,
+                                                                 @Valid @RequestBody CreateApplicationRequest request) {
+        ApplicationResponse response = applicationService.createApplication(currentUser.getUserId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
 
-    // 2) Update a job application
-    @PatchMapping("/{applicationId}")
-    public ApplicationResponse updateApplication(@PathVariable Long applicationId, @RequestBody ApplicationRequest request) {
-        return applicationService.updateApplication(applicationId, request);
-    }
-
-
-    // 3) Delete a job application
-    @DeleteMapping("/{applicationId}")
-    public String deleteApplication(@PathVariable Long applicationId) {
-        return applicationService.deleteApplication(applicationId);
-    }
-
-
-    // 4) Get a job application by its ID
+    // 3) Get one of the current user's job applications
     @GetMapping("/{applicationId}")
-    public ApplicationResponse getApplicationById(@PathVariable Long applicationId) {
-        return applicationService.getApplicationById(applicationId);
+    public ApplicationResponse getApplication(@AuthenticationPrincipal AuthenticatedUser currentUser,
+                                              @PathVariable Long applicationId) {
+        return applicationService.getApplication(currentUser.getUserId(), applicationId);
     }
 
 
-    // 5) Get all job applications from a user (based on user's ID)
-    @GetMapping("/user/{userId}")
-    public List<ApplicationResponse> getApplicationsByUserId(@PathVariable Long userId) {
-        return applicationService.getApplicationsByUserId(userId);
+    // 4) Update one of the current user's job applications
+    @PatchMapping("/{applicationId}")
+    public ApplicationResponse updateApplication(@AuthenticationPrincipal AuthenticatedUser currentUser,
+                                                 @PathVariable Long applicationId,
+                                                 @Valid @RequestBody UpdateApplicationRequest request) {
+        return applicationService.updateApplication(currentUser.getUserId(), applicationId, request);
+    }
+
+
+    // 5) Delete one of the current user's job applications
+    @DeleteMapping("/{applicationId}")
+    public ResponseEntity<Void> deleteApplication(@AuthenticationPrincipal AuthenticatedUser currentUser,
+                                                  @PathVariable Long applicationId) {
+        applicationService.deleteApplication(currentUser.getUserId(), applicationId);
+        return ResponseEntity.noContent().build();
     }
 }

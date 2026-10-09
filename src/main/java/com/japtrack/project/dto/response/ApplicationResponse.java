@@ -1,7 +1,6 @@
 package com.japtrack.project.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.japtrack.project.entity.User;
 import com.japtrack.project.enums.ApplicationStatus;
 import com.japtrack.project.enums.EmploymentType;
 import com.japtrack.project.enums.WorkSetting;
