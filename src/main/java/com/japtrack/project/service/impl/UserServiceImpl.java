@@ -1,7 +1,7 @@
 package com.japtrack.project.service.impl;
 
 import com.japtrack.project.dto.request.RegisterRequest;
-import com.japtrack.project.dto.request.UserRequest;
+import com.japtrack.project.dto.request.UpdateUserRequest;
 import com.japtrack.project.dto.response.UserResponse;
 import com.japtrack.project.entity.User;
 import com.japtrack.project.exception.custom.DuplicateResourceException;
@@ -10,6 +10,7 @@ import com.japtrack.project.repository.UserRepository;
 import com.japtrack.project.service.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Service
@@ -56,9 +57,9 @@ public class UserServiceImpl implements UserService {
  /*
     - SIGNATURE METHODS:
          * createUser
-         * updateUser
-         * deleteUser
-         * getUserById
+         * getCurrentUser
+         * updateCurrentUser
+         * deleteCurrentUser
 */
 
     // 1) createUser (registration)
@@ -93,11 +94,21 @@ public class UserServiceImpl implements UserService {
     }
 
 
-    // 2) updateUser
+    // 2) getCurrentUser
     @Override
-    public UserResponse updateUser(Long userId, UserRequest request) {
+    @Transactional(readOnly = true)
+    public UserResponse getCurrentUser(Long currentUserId) {
 
-        User user = findUserById(userId);
+        return convertToResponse(findUserById(currentUserId));
+    }
+
+
+    // 3) updateCurrentUser (profile fields only; the password is not part of UpdateUserRequest)
+    @Override
+    @Transactional
+    public UserResponse updateCurrentUser(Long currentUserId, UpdateUserRequest request) {
+
+        User user = findUserById(currentUserId);
 
 
         // Check which field exactly does the user want to update,
@@ -105,7 +116,8 @@ public class UserServiceImpl implements UserService {
 
         if (request.getUserName() != null) {
 
-            if (userRepository.existsByUserName(request.getUserName())) {
+            // Only another account holding this username is a conflict; keeping your own is fine
+            if (userRepository.existsByUserNameAndUserIdNot(request.getUserName(), currentUserId)) {
                 throw new DuplicateResourceException(
                         "@username already in use, please try another one.");
             }
@@ -123,9 +135,11 @@ public class UserServiceImpl implements UserService {
 
         if (request.getUserEmail() != null) {
 
+            // Normalize first, so "Jane@Example.com" is checked and stored the same way as "jane@example.com".
+            // Login looks emails up in this normalized form too (MyUserDetailsService).
             String email = User.normalizeEmail(request.getUserEmail());
 
-            if (userRepository.existsByUserEmail(email)) {
+            if (userRepository.existsByUserEmailAndUserIdNot(email, currentUserId)) {
                 throw new DuplicateResourceException(
                         "Email already in use, please try another one.");
             }
@@ -133,32 +147,21 @@ public class UserServiceImpl implements UserService {
             user.setUserEmail(email);
         }
 
-        // Temporary: password changes move to a dedicated endpoint in a later phase
-        if (request.getPassword() != null) {
-            user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        }
-
         User updatedUser = userRepository.save(user);
         return convertToResponse(updatedUser);
     }
 
 
-    // 3) deleteUser
+    // 4) deleteCurrentUser
     @Override
-    public String deleteUser(Long userId) {
+    @Transactional
+    public void deleteCurrentUser(Long currentUserId) {
 
-        User user = findUserById(userId);
+        User user = findUserById(currentUserId);
+
+        // User.applications is mapped with CascadeType.ALL, so JPA deletes this user's applications too.
+        // The transaction matters here: the applications list is loaded lazily during the delete, and with
+        // open-in-view disabled that only works while a transaction (and its persistence context) is open.
         userRepository.delete(user);
-
-        return "User deleted successfully!";
-    }
-
-
-    // 4) getUserById
-    @Override
-    public UserResponse getUserById(Long userId) {
-
-        User user = findUserById(userId);
-        return convertToResponse(user);
     }
 }

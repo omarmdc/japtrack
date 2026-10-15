@@ -1,7 +1,7 @@
 package com.japtrack.project.service.impl;
 
 import com.japtrack.project.dto.request.RegisterRequest;
-import com.japtrack.project.dto.request.UserRequest;
+import com.japtrack.project.dto.request.UpdateUserRequest;
 import com.japtrack.project.dto.response.UserResponse;
 import com.japtrack.project.entity.User;
 import com.japtrack.project.exception.custom.DuplicateResourceException;
@@ -126,17 +126,32 @@ class UserServiceImplTest {
     }
 
     @Test
-    void updateUserHashesNewPassword() {
+    void updateCurrentUserChecksDuplicatesOnlyAgainstOtherAccounts() {
         User existing = withDatabaseFields(new User());
-        existing.setPasswordHash(passwordEncoder.encode("old-password"));
         when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        UserRequest request = new UserRequest();
-        request.setPassword(RAW_PASSWORD);
-        userService.updateUser(1L, request);
+        UpdateUserRequest request = new UpdateUserRequest();
+        request.setUserName("jdoe");
+        request.setUserEmail(" JDoe@Example.com ");
+        userService.updateCurrentUser(1L, request);
 
-        assertThat(existing.getPasswordHash()).startsWith("{bcrypt}");
-        assertThat(passwordEncoder.matches(RAW_PASSWORD, existing.getPasswordHash())).isTrue();
+        // The checks exclude the current account (ID 1) and use the normalized email
+        verify(userRepository).existsByUserNameAndUserIdNot("jdoe", 1L);
+        verify(userRepository).existsByUserEmailAndUserIdNot("jdoe@example.com", 1L);
+        assertThat(existing.getUserEmail()).isEqualTo("jdoe@example.com");
+    }
+
+    @Test
+    void updateCurrentUserRejectsEmailOwnedByAnotherAccount() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(withDatabaseFields(new User())));
+        when(userRepository.existsByUserEmailAndUserIdNot("taken@example.com", 1L)).thenReturn(true);
+
+        UpdateUserRequest request = new UpdateUserRequest();
+        request.setUserEmail("taken@example.com");
+
+        assertThatThrownBy(() -> userService.updateCurrentUser(1L, request))
+                .isInstanceOf(DuplicateResourceException.class);
+        verify(userRepository, never()).save(any());
     }
 }

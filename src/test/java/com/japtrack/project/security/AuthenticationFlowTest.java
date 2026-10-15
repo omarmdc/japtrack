@@ -84,7 +84,7 @@ class AuthenticationFlowTest {
 
     @Test
     void protectedEndpointWithoutSessionReturnsJson401() throws Exception {
-        MvcResult result = mockMvc.perform(get("/api/users/{userId}", user.getUserId()))
+        MvcResult result = mockMvc.perform(get("/api/users/me"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value(401))
@@ -143,7 +143,7 @@ class AuthenticationFlowTest {
     void sessionFromLoginAuthenticatesLaterRequests() throws Exception {
         MockHttpSession session = loggedInSession();
 
-        mockMvc.perform(get("/api/users/{userId}", user.getUserId()).session(session))
+        mockMvc.perform(get("/api/users/me").session(session))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userEmail").value("jdoe@example.com"));
     }
@@ -205,7 +205,7 @@ class AuthenticationFlowTest {
     void authenticatedPatchWithValidCsrfTokenSucceeds() throws Exception {
         MockHttpSession session = loggedInSession();
 
-        mockMvc.perform(patch("/api/users/{userId}", user.getUserId())
+        mockMvc.perform(patch("/api/users/me")
                         .session(session)
                         .with(validToken(mockMvc))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -277,7 +277,7 @@ class AuthenticationFlowTest {
         assertThat(sessionCookie.getMaxAge()).isZero();
 
         // A fresh request without the old session is unauthenticated again
-        mockMvc.perform(get("/api/users/{userId}", user.getUserId()))
+        mockMvc.perform(get("/api/users/me"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -289,7 +289,7 @@ class AuthenticationFlowTest {
                 .andExpect(status().isForbidden());
 
         assertThat(session.isInvalid()).isFalse();
-        mockMvc.perform(get("/api/users/{userId}", user.getUserId()).session(session))
+        mockMvc.perform(get("/api/users/me").session(session))
                 .andExpect(status().isOk());
     }
 }

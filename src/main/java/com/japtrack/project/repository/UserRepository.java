@@ -13,6 +13,11 @@ public interface UserRepository extends JpaRepository <User, Long> {
     // Check if username is already in use
     boolean existsByUserName (String userName);
 
+    // Profile updates: is this email/username taken by a DIFFERENT account?
+    // Excluding the user's own ID means re-sending your current email or username isn't a false 409.
+    boolean existsByUserEmailAndUserIdNot (String userEmail, Long userId);
+    boolean existsByUserNameAndUserIdNot (String userName, Long userId);
+
     // Find user by email (for login)
     Optional<User> findByUserEmail(String userEmail);
 

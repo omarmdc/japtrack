@@ -37,7 +37,7 @@ public class AuthController {
     // 2) The currently logged-in user, taken from the session, never from the client
     @GetMapping("/me")
     public UserResponse me(@AuthenticationPrincipal AuthenticatedUser currentUser) {
-        return userService.getUserById(currentUser.getUserId());
+        return userService.getCurrentUser(currentUser.getUserId());
     }
 
     // 3) CSRF token for the frontend

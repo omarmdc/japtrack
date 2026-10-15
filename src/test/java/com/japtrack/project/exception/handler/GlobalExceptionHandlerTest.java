@@ -1,5 +1,6 @@
 package com.japtrack.project.exception.handler;
 
+import com.japtrack.project.security.AuthenticatedUser;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -65,18 +66,18 @@ class GlobalExceptionHandlerTest {
     }
 
     private static final String VALID_APPLICATION_FIELDS =
-            "\"userId\": 1, \"companyName\": \"Acme\", \"positionTitle\": \"Intern\"";
+            "\"companyName\": \"Acme\", \"positionTitle\": \"Intern\"";
 
 
     // 400: wrong-typed parameter
 
     @Test
     void wrongTypedPathVariableReturns400() throws Exception {
-        mockMvc.perform(get("/api/users/abc").with(user("tester")))
+        mockMvc.perform(get("/api/applications/abc").with(user("tester")))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value("Invalid value for parameter 'userId'"))
+                .andExpect(jsonPath("$.message").value("Invalid value for parameter 'applicationId'"))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
@@ -130,7 +131,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void fieldErrorsAreOmittedWhenThereAreNone() throws Exception {
-        mockMvc.perform(get("/api/users/abc").with(user("tester")))
+        mockMvc.perform(get("/api/applications/abc").with(user("tester")))
                 .andExpect(jsonPath("$.fieldErrors").doesNotExist());
     }
 
@@ -154,15 +155,18 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void missingResourceStillReturns404WithItsMessage() throws Exception {
-        mockMvc.perform(get("/api/users/999999").with(user("tester")))
+        // The application controller needs our own principal type to know whose applications to search
+        AuthenticatedUser someUser = new AuthenticatedUser(999_998L, "someone@example.com", null);
+
+        mockMvc.perform(get("/api/applications/999999").with(user(someUser)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.message").value("Sorry, we couldn't find user with ID: 999999"));
+                .andExpect(jsonPath("$.message").value("Sorry, we couldn't find a job application with ID: 999999"));
     }
 
     @Test
     void unsupportedMethodReturns405WithAllowHeader() throws Exception {
-        mockMvc.perform(put("/api/users/1").with(user("tester")).with(validToken(mockMvc))
+        mockMvc.perform(put("/api/applications/1").with(user("tester")).with(validToken(mockMvc))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isMethodNotAllowed())
