@@ -1,5 +1,6 @@
 package com.japtrack.project.service;
 
+import com.japtrack.project.dto.request.ChangePasswordRequest;
 import com.japtrack.project.dto.request.RegisterRequest;
 import com.japtrack.project.dto.request.UpdateUserRequest;
 import com.japtrack.project.dto.response.UserResponse;
@@ -12,4 +13,5 @@ public interface UserService {
     UserResponse getCurrentUser (Long currentUserId);
     UserResponse updateCurrentUser (Long currentUserId, UpdateUserRequest request);
     void deleteCurrentUser (Long currentUserId);
+    void changePassword (Long currentUserId, ChangePasswordRequest request);
 }

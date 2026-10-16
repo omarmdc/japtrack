@@ -17,6 +17,8 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import static com.japtrack.project.support.SpaCsrf.validToken;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -163,15 +165,32 @@ class AuthControllerTest {
 
     @Test
     void passwordLongerThan72CharactersReturns400() throws Exception {
+        // 73 ASCII characters is also 73 bytes, so both the character and the byte rule fail.
+        // The error map keeps one message per field, and the order of the two violations isn't guaranteed.
         register(registerJson("jdoe", "jdoe@example.com", "a".repeat(73)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.fieldErrors.password").value("Password must be between 8 and 72 characters"));
+                .andExpect(jsonPath("$.fieldErrors.password").value(anyOf(
+                        equalTo("Password must be between 8 and 72 characters"),
+                        equalTo("Password must be at most 72 bytes"))));
     }
 
     @Test
     void passwordOfExactly72CharactersIsAccepted() throws Exception {
         register(registerJson("jdoe", "jdoe@example.com", "a".repeat(72)))
                 .andExpect(status().isCreated());
+    }
+
+    @Test
+    void passwordUnder72CharactersButOver72BytesReturns400AndCreatesNoUser() throws Exception {
+        // 37 characters (fine for @Size) but "é" is 2 bytes in UTF-8, so 74 bytes: more than BCrypt can hash.
+        // Before the byte check this reached PasswordEncoder.encode() and came back as a 500.
+        register(registerJson("jdoe", "jdoe@example.com", "é".repeat(37)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.fieldErrors.password").value("Password must be at most 72 bytes"));
+
+        assertThat(userRepository.count()).isZero();
     }
 
     @Test

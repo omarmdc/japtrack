@@ -1,10 +1,12 @@
 package com.japtrack.project.service.impl;
 
+import com.japtrack.project.dto.request.ChangePasswordRequest;
 import com.japtrack.project.dto.request.RegisterRequest;
 import com.japtrack.project.dto.request.UpdateUserRequest;
 import com.japtrack.project.dto.response.UserResponse;
 import com.japtrack.project.entity.User;
 import com.japtrack.project.exception.custom.DuplicateResourceException;
+import com.japtrack.project.exception.custom.IncorrectPasswordException;
 import com.japtrack.project.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -153,5 +155,56 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.updateCurrentUser(1L, request))
                 .isInstanceOf(DuplicateResourceException.class);
         verify(userRepository, never()).save(any());
+    }
+
+    private ChangePasswordRequest changePasswordRequest(String currentPassword, String newPassword) {
+        ChangePasswordRequest request = new ChangePasswordRequest();
+        request.setCurrentPassword(currentPassword);
+        request.setNewPassword(newPassword);
+        return request;
+    }
+
+    @Test
+    void changePasswordStoresANewHashWhenCurrentPasswordMatches() {
+        User existing = withDatabaseFields(new User());
+        existing.setPasswordHash(passwordEncoder.encode("old-password"));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
+
+        userService.changePassword(1L, changePasswordRequest("old-password", RAW_PASSWORD));
+
+        verify(userRepository).save(existing);
+        assertThat(existing.getPasswordHash()).startsWith("{bcrypt}").doesNotContain(RAW_PASSWORD);
+        assertThat(passwordEncoder.matches(RAW_PASSWORD, existing.getPasswordHash())).isTrue();
+    }
+
+    @Test
+    void changePasswordRejectsWrongCurrentPasswordAndChangesNothing() {
+        User existing = withDatabaseFields(new User());
+        String originalHash = passwordEncoder.encode("old-password");
+        existing.setPasswordHash(originalHash);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
+
+        assertThatThrownBy(() -> userService.changePassword(1L, changePasswordRequest("wrong-password", RAW_PASSWORD)))
+                .isInstanceOf(IncorrectPasswordException.class)
+                .hasMessage("Current password is incorrect");
+
+        assertThat(existing.getPasswordHash()).isEqualTo(originalHash);
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void changePasswordRequestNeverPrintsPasswords() {
+        assertThat(changePasswordRequest("old-password", RAW_PASSWORD).toString())
+                .doesNotContain("old-password")
+                .doesNotContain(RAW_PASSWORD);
+    }
+
+    @Test
+    void registerRequestNeverPrintsThePassword() {
+        String printed = newUserRequest().toString();
+
+        assertThat(printed).doesNotContain(RAW_PASSWORD);
+        // The other fields are still printed, so the object stays useful in logs
+        assertThat(printed).contains("jdoe@example.com");
     }
 }

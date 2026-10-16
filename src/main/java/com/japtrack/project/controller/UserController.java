@@ -1,5 +1,6 @@
 package com.japtrack.project.controller;
 
+import com.japtrack.project.dto.request.ChangePasswordRequest;
 import com.japtrack.project.dto.request.UpdateUserRequest;
 import com.japtrack.project.dto.response.UserResponse;
 import com.japtrack.project.security.AuthenticatedUser;
@@ -65,6 +66,18 @@ public class UserController {
         // so even a copy of the old session cookie is rejected with 401 afterwards.
         logoutHandler.logout(request, response, authentication);
 
+        return ResponseEntity.noContent().build();
+    }
+
+    // 4) Change the current user's password (requires the current password)
+    // Like the other /me routes, the account comes from the session principal, never from the request.
+    // The session stays logged in afterwards: the AuthenticatedUser it holds has the user's ID and email but no
+    // password (erased at login), so nothing in it becomes stale. Logging out the user's other browsers/devices
+    // would need a session registry, which is out of scope for now.
+    @PatchMapping("/me/password")
+    public ResponseEntity<Void> changePassword(@AuthenticationPrincipal AuthenticatedUser currentUser,
+                                               @Valid @RequestBody ChangePasswordRequest request) {
+        userService.changePassword(currentUser.getUserId(), request);
         return ResponseEntity.noContent().build();
     }
 }

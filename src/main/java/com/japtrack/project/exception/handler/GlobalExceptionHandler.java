@@ -2,6 +2,7 @@ package com.japtrack.project.exception.handler;
 
 import com.japtrack.project.dto.response.ApiError;
 import com.japtrack.project.exception.custom.DuplicateResourceException;
+import com.japtrack.project.exception.custom.IncorrectPasswordException;
 import com.japtrack.project.exception.custom.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,10 +41,17 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, e.getMessage());
     }
 
+    // 3) Incorrect current password on a password change - 400
+    // The message is fixed in the service ("Current password is incorrect") and never includes the password or hash
+    @ExceptionHandler(IncorrectPasswordException.class)
+    public ResponseEntity<ApiError> incorrectPassword (IncorrectPasswordException e) {
+        return build(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
 
     // CLIENT ERRORS - 400
 
-    // 3) A @Valid request body failed validation
+    // 4) A @Valid request body failed validation
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiError> validationFailed (MethodArgumentNotValidException e) {
 
@@ -57,13 +65,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(error);
     }
 
-    // 4) Body is not valid JSON, or a value can't be converted (e.g. an unknown enum value or a bad date)
+    // 5) Body is not valid JSON, or a value can't be converted (e.g. an unknown enum value or a bad date)
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiError> unreadableBody (HttpMessageNotReadableException e) {
         return build(HttpStatus.BAD_REQUEST, "Malformed or unreadable request body");
     }
 
-    // 5) A path variable or request parameter has the wrong type (e.g. /api/users/abc)
+    // 6) A path variable or request parameter has the wrong type (e.g. /api/applications/abc)
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiError> wrongParameterType (MethodArgumentTypeMismatchException e) {
         return build(HttpStatus.BAD_REQUEST, "Invalid value for parameter '" + e.getName() + "'");
